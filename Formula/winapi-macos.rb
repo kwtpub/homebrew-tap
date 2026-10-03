@@ -33,6 +33,8 @@ class WinapiMacos < Formula
     assert_equal source, (testpath/"main.cpp").read
     assert_path_exists testpath/"mac-native/windows.h"
     assert_path_exists testpath/"mac-native/LICENSE"
+    # Homebrew's CPATH can point to a different SDK than the selected xcrun SDK.
+    ENV.delete "CPATH"
     system "/bin/bash", testpath/"mac-native/build.sh"
     system testpath/"mac-native/#{testpath.basename}_native"
   end
