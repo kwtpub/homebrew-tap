@@ -1,8 +1,8 @@
 class WinapiMacos < Formula
   desc "Run educational WinAPI graphics projects natively on macOS"
   homepage "https://github.com/kwtpub/winapi-macos"
-  url "https://github.com/kwtpub/winapi-macos/releases/download/v0.1.0/winapi-macos-0.1.0-universal-macos.tar.gz"
-  sha256 "da43e52ac29a74f047c1d93fb463ea38bd848a8e4e32bdbae6b6913bfa2d78a5"
+  url "https://github.com/kwtpub/winapi-macos/releases/download/v0.2.0/winapi-macos-0.2.0-universal-macos.tar.gz"
+  sha256 "27b7239c6534fb662bbac6af8ad855cde74e5f63f32ab5fe29eafe5201a2d446"
   license "MIT"
 
   depends_on :macos
@@ -14,6 +14,11 @@ class WinapiMacos < Formula
   def caveats
     <<~EOS
       In your C++ project directory, run:
+        winapi-macos
+        g++ -std=c++17 main.cpp -I mac-native mac-native/libwinapi_macos.a -framework Cocoa -o app
+        ./app
+
+      Or install, build and run with a script:
         winapi-macos --run
 
       Building practice projects requires Xcode or Command Line Tools:
@@ -26,16 +31,21 @@ class WinapiMacos < Formula
     source = <<~CPP
       #include <windows.h>
       static_assert(sizeof(COLORREF) == 4, "Windows color type");
-      int main() { return RGB(255, 0, 0) == 255 ? 0 : 1; }
+      int main() {
+        return RGB(255, 0, 0) == 255 &&
+          SetPixel(nullptr, 0, 0, RGB(0, 0, 0)) == CLR_INVALID ? 0 : 1;
+      }
     CPP
     (testpath/"main.cpp").write source
     system bin/"winapi-macos"
     assert_equal source, (testpath/"main.cpp").read
     assert_path_exists testpath/"mac-native/windows.h"
+    assert_path_exists testpath/"mac-native/libwinapi_macos.a"
     assert_path_exists testpath/"mac-native/LICENSE"
     # Homebrew's CPATH can point to a different SDK than the selected xcrun SDK.
     ENV.delete "CPATH"
-    system "/bin/bash", testpath/"mac-native/build.sh"
-    system testpath/"mac-native/#{testpath.basename}_native"
+    system ENV.cxx, "-std=c++17", testpath/"main.cpp", "-I", testpath/"mac-native",
+           testpath/"mac-native/libwinapi_macos.a", "-framework", "Cocoa", "-o", testpath/"app"
+    system testpath/"app"
   end
 end

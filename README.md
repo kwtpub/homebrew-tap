@@ -7,11 +7,16 @@ brew install kwtpub/tap/winapi-macos
 Затем в папке учебного C++-проекта:
 
 ```sh
-winapi-macos --run
+winapi-macos
+g++ -std=c++17 main.cpp -I mac-native mac-native/libwinapi_macos.a -framework Cocoa -o app
+./app
 ```
 
-Команда добавляет переносную прослойку WinAPI/GDI, собирает и запускает
-программу на macOS. Для сборки практик нужны Xcode Command Line Tools.
+Установщик добавляет заголовок `windows.h` и готовую библиотеку WinAPI/GDI
+для Apple Silicon и Intel. Укажите в команде `g++` все исходники одной
+программы. На macOS системный `g++` использует Apple Clang;
+для сборки практик нужны Xcode или Command Line Tools.
+Автоматическая сборка и запуск также доступны: `winapi-macos --run`.
 
 Исходники и документация: [kwtpub/winapi-macos](https://github.com/kwtpub/winapi-macos).
 
