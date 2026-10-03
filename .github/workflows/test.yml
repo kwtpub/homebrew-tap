@@ -1,0 +1,29 @@
+name: Homebrew
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_ANALYTICS: "1"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Tap the checked-out repository
+        run: brew tap kwtpub/tap "$GITHUB_WORKSPACE"
+      - name: Check formula style
+        run: brew style kwtpub/tap/winapi-macos
+      - name: Install and test
+        run: |
+          brew install kwtpub/tap/winapi-macos
+          brew test kwtpub/tap/winapi-macos
+      - name: Audit formula
+        run: brew audit --strict kwtpub/tap/winapi-macos
