@@ -1,8 +1,8 @@
 class WinapiMacos < Formula
   desc "Run educational WinAPI graphics projects natively on macOS"
   homepage "https://github.com/kwtpub/winapi-macos"
-  url "https://github.com/kwtpub/winapi-macos/releases/download/v0.2.0/winapi-macos-0.2.0-universal-macos.tar.gz"
-  sha256 "27b7239c6534fb662bbac6af8ad855cde74e5f63f32ab5fe29eafe5201a2d446"
+  url "https://github.com/kwtpub/winapi-macos/releases/download/v0.3.0/winapi-macos-0.3.0-universal-macos.tar.gz"
+  sha256 "cc7da822e7b7adc668b9932fff54a6b22c9e7c278e2ee0b43f2696a543434d25"
   license "MIT"
 
   depends_on :macos
@@ -13,10 +13,15 @@ class WinapiMacos < Formula
 
   def caveats
     <<~EOS
-      In your C++ project directory, run:
+      Set up compiler commands once, then open a new Terminal tab:
+        winapi-macos --setup
+
+      In your C++ project directory:
         winapi-macos
-        g++ -std=c++17 main.cpp -I mac-native mac-native/libwinapi_macos.a -framework Cocoa -o app
+        g++ *.cpp -o app
         ./app
+
+      Undo the shell setup with: winapi-macos --unsetup
 
       Or install, build and run with a script:
         winapi-macos --run
@@ -44,8 +49,16 @@ class WinapiMacos < Formula
     assert_path_exists testpath/"mac-native/LICENSE"
     # Homebrew's CPATH can point to a different SDK than the selected xcrun SDK.
     ENV.delete "CPATH"
-    system ENV.cxx, "-std=c++17", testpath/"main.cpp", "-I", testpath/"mac-native",
-           testpath/"mac-native/libwinapi_macos.a", "-framework", "Cocoa", "-o", testpath/"app"
+    # Use an isolated shell configuration, preserving the real user's profiles.
+    config = testpath/"shell-config"
+    ENV["WINAPI_MACOS_CONFIG_HOME"] = config.to_s
+    ENV["SHELL"] = "/bin/zsh"
+    system bin/"winapi-macos", "--setup"
+    ENV.prepend_path "PATH", config/".winapi-macos/bin"
+    system File.basename(ENV.cxx), testpath/"main.cpp", "-o", testpath/"app"
     system testpath/"app"
+    system bin/"winapi-macos", "--unsetup"
+    refute_path_exists config/".zshrc"
+    refute_path_exists config/".winapi-macos/bin/g++"
   end
 end
